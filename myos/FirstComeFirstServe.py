@@ -1,29 +1,13 @@
 import threading
+import traceback
 from time import sleep
 from myos.ProgramState import ProgramState
 
 
 class FirstComeFirstServe(threading.Thread):
-    name = ""
-    id = 0
-    ioProcessingLag = 0
-    lag = 2
-    shutdown = False
-    clockTime = -1
-    queue = []
-    processedCount = 0
-    toProcess = 4
-    processStart = {}
-    currentProcess = ""
-    maxTime = 31
-
-    statusDict = {}
-    statusDict["None"] = "background-color:none;"
-    statusDict["Ready"] = "background-color:yellow;"
-    statusDict["CPU"] = "background-color:green;"
-    statusDict["IO"] = "background-color:red;"
 
     def __init__(self, id, name, ui, callback=lambda: None):
+        print(f"Constructor of FCFS")
         threading.Thread.__init__(self)
         self.id = id
         self.name = name
@@ -31,6 +15,26 @@ class FirstComeFirstServe(threading.Thread):
         self.callback = callback
         self.shutdown =False
         self.toProcess = len(self.ui.programState.Data)
+
+        self.name = ""
+        self.id = 0
+        self.ioProcessingLag = 0
+        self.lag = 2
+        self.shutdown = False
+        self.clockTime = -1
+        self.queue = []
+        self.processedCount = 0
+        self.toProcess = 4
+        self.processStart = {}
+        self.currentProcess = ""
+        self.maxTime = 31
+        self.firstCPU = {}
+
+        self.statusDict = {}
+        self.statusDict["None"] = "background-color:none;"
+        self.statusDict["Ready"] = "background-color:yellow;"
+        self.statusDict["CPU"] = "background-color:green;"
+        self.statusDict["IO"] = "background-color:red;"
 
     def calculateTimeline(self):
         calculated = {}
@@ -48,6 +52,7 @@ class FirstComeFirstServe(threading.Thread):
         finalTimeLine["P2"] = ["None"] * 31
         finalTimeLine["P3"] = ["None"] * 31
         finalTimeLine["P4"] = ["None"] * 31
+
         data = self.ui.programState.Data
 
         for i in range(len(data)):
@@ -101,22 +106,24 @@ class FirstComeFirstServe(threading.Thread):
                 for i in range(len(self.finalTimeline)):
                     p = ProgramState.indexes[i]
 
-                    # process not yet arrived
-                    # if(self.finalTimeline[p][self.clockTime] == 'None'):
-                    #     print(f"Skipping this process {p} as not yet arrived")
-                    #     continue
-                    #     ## inner IF ENDS
-                    # ## NONE IF ENDS
-
+                    print(f"p : {p}, status : {self.finalTimeline[p][self.clockTime]}")
+                    print(f"processStart : {self.processStart}")
                     # # process not yet in queue add to queue
                     if p not in self.processStart and self.finalTimeline[p][self.clockTime] != 'None':
                         self.processStart[p] = self.clockTime
                         self.queue.append(p)
                         print(f"Process arrived : {p}, queue : {self.queue}")
+                        self.ui.programState.ResponseTime[p] = self.clockTime
+                        self.ui.programState.TurnAroundTime[p] = self.clockTime
 
+                    if len(self.queue) < 1:
+                        print(f" len of Queue : {len(self.queue)} No Process arived yet at {self.clockTime}, so skipping")
+                        continue
 
                     # # process at the head of the queue will be in executing state
                     self.currentProcess = self.queue[0]
+                    if self.currentProcess not in self.firstCPU:
+                        self.firstCPU[self.currentProcess] = self.clockTime
                     currentProcessIndex = self.processStart[self.currentProcess]
                     currentProcessTimeline = self.finalTimeline[self.currentProcess]
                     status = currentProcessTimeline[currentProcessIndex]
@@ -136,26 +143,51 @@ class FirstComeFirstServe(threading.Thread):
                     button = self.ui.__dict__[bid]
                     style = self.statusDict["Ready"]
                     button.setStyleSheet(style)
+                    if p not in self.ui.programState.WaitTime:
+                        self.ui.programState.WaitTime[p] = 0
+                    self.ui.programState.WaitTime[p] += 1
+
                 ## READY LOOP ENDS
+
+                if len(self.queue) < 1:
+                    print(f"Skipping while loop as no process arrived")
+                    continue
 
                 self.processStart[self.currentProcess] += 1
                 currentProcessTimeline = self.finalTimeline[self.currentProcess]
                 currentProcessIndex = self.processStart[self.currentProcess]
                 status = currentProcessTimeline[currentProcessIndex]
                 print(f"currentProcess : {self.currentProcess}")
+
                 if status == "None":
                     self.queue.pop(0)
                     self.processedCount += 1
+                    self.ui.programState.TurnAroundTime[self.currentProcess] = self.clockTime - self.ui.programState.TurnAroundTime[self.currentProcess]
+
             ## WHILE LOOP ENDS
         ## TRY ENDS
         except Exception as e:
+            print("Some Exception in FCFS")
+            traceback.print_exc()
             print(e)
         finally:
             print("Finally of FCFS...")
+            self.ui.label_5.setText(f" FCFS Done...")
+            for i in self.ui.programState.indexes:
+                self.ui.programState.ResponseTime[i] = self.firstCPU[i] - self.ui.programState.Data[i][0]
+            print(f"TurnAroundTime : {self.ui.programState.TurnAroundTime}")
+            print(f"WaitTime : {self.ui.programState.WaitTime}")
+            print(f"ResponseTime : {self.ui.programState.ResponseTime}")
+            self.calculateAvgMetrics()
+            self.ui.repainting()
             self.kill()
             self.callback(id)
-            self.ui.label_5.setText(f" FCFS Done...")
 
+    def calculateAvgMetrics(self):
+        self.ui.programState.Comparision["FirstComeFirstServe"] = {}
+        self.ui.programState.Comparision["FirstComeFirstServe"]["AvgTurnAroundTime"] = 5
+        self.ui.programState.Comparision["FirstComeFirstServe"]["AvgResponseTime"] = 3
+        self.ui.programState.Comparision["FirstComeFirstServe"]["AvgWaitTime"] = 1
 
     def kill(self):
         self.shutdown = True

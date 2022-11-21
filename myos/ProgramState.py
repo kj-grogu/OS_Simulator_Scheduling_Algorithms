@@ -28,3 +28,26 @@ class ProgramState():
     Processes["P2"] = None
     Processes["P3"] = None
     Processes["P4"] = None
+
+    TurnAroundTime = {}
+    TurnAroundTime["P1"] = 0
+    TurnAroundTime["P2"] = 0
+    TurnAroundTime["P3"] = 0
+    TurnAroundTime["P4"] = 0
+
+    WaitTime = {}
+    WaitTime["P1"] = 0
+    WaitTime["P2"] = 0
+    WaitTime["P3"] = 0
+    WaitTime["P4"] = 0
+
+    ResponseTime = {}
+    ResponseTime["P1"] = 0
+    ResponseTime["P2"] = 0
+    ResponseTime["P3"] = 0
+    ResponseTime["P4"] = 0
+
+    Throughput = {}
+
+    Comparision = {}
+
