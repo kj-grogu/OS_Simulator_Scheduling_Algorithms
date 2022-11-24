@@ -10,9 +10,12 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+<<<<<<< HEAD
 # QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 # # QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
+=======
+>>>>>>> 294e44a8436a41a35f1984f1b0b6c28c41899e04
 from myos.FirstComeFirstServe import FirstComeFirstServe
 from myos.Priority import Priority
 from myos.MyProcess import MyProcess
@@ -1925,6 +1928,7 @@ class Ui_MainWindow(object):
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
+<<<<<<< HEAD
     app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
@@ -1941,6 +1945,13 @@ if __name__ == "__main__":
 
 
 
+=======
+    # app.setStyleSheet(qdarktheme.load_stylesheet("light"))
+    MainWindow = QtWidgets.QMainWindow()
+    MainWindow.setWindowTitle("Operating System Simulator")
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+>>>>>>> 294e44a8436a41a35f1984f1b0b6c28c41899e04
     app.aboutToQuit.connect(ui.cleanup)
     MainWindow.show()
     sys.exit(app.exec_())
