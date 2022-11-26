@@ -22,8 +22,8 @@ Open Terminal in Pycharm, its at the bottom
 ### FCFS
 ![FCFS](https://github.com/kj-grogu/OS_Simulator_Scheduling_Algorithms/blob/main/io/osm_fcfs_00.gif)
 
-### RoundRobin
-![RoundRobin](https://github.com/kj-grogu/OS_Simulator_Scheduling_Algorithms/blob/main/io/osm_rr_00.gif)
+### Priority
+![Priority](https://github.com/kj-grogu/OS_Simulator_Scheduling_Algorithms/blob/main/io/osm_Priority_00.gif)
 
 
 
