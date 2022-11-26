@@ -17,6 +17,11 @@ Open Terminal in Pycharm, its at the bottom
 
 
 
+#### OSM in actions
+
+### FCFS
+![FCFS](https://github.com/kj-grogu/OS_Simulator_Scheduling_Algorithms/blob/main/io/osm_fcfs_00.gif)
+
 
 ![Image00](https://github.com/kj-grogu/OS_Simulator_Scheduling_Algorithms/blob/main/io/image00.png)
 
