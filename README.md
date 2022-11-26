@@ -26,6 +26,23 @@ Open Terminal in Pycharm, its at the bottom
  **myos\FirstComeFirstServe.py** - FirstComeFirstServe scheduler
 
 
+
+
+
+
+![Image00](https://github.com/kj-grogu/OS_Simulator_Scheduling_Algorithms/blob/main/io/image00.png)
+
+![Image01](https://github.com/kj-grogu/OS_Simulator_Scheduling_Algorithms/blob/main/io/image01.png)
+
+
+
+
+<br/>
+<br/>
+<br/>
+<br/>
+Tools Used
+
 PyQtDesigner - https://pythonbasics.org/qt-designer-python/
 
 Generate .ui file and compile to python file using below command
