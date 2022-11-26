@@ -1955,7 +1955,7 @@ class Ui_MainWindow(object):
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    # app.setStyleSheet(qdarktheme.load_stylesheet("light"))
+    app.setStyleSheet("QLabel{font-size: 8pt;} QPushButton{font-size: 8pt;} QComboBox{font-size: 8pt;} QPlainTextEdit{font-size: 8pt;}")
     MainWindow = QtWidgets.QMainWindow()
     MainWindow.setWindowTitle("Operating System Simulator")
     ui = Ui_MainWindow()
