@@ -15,6 +15,14 @@ Open Terminal in Pycharm, its at the bottom
 ### python3 .\osm_1.py (for windows) 
 
 
+
+
+
+![Image00](https://github.com/kj-grogu/OS_Simulator_Scheduling_Algorithms/blob/main/io/image00.png)
+
+![Image01](https://github.com/kj-grogu/OS_Simulator_Scheduling_Algorithms/blob/main/io/image01.png)
+
+
 #### Main Files -
  **osm_1.py** (UI Component)
  **myos** package - Has different schedulers
@@ -25,14 +33,11 @@ Open Terminal in Pycharm, its at the bottom
 
  **myos\FirstComeFirstServe.py** - FirstComeFirstServe scheduler
 
+ **myos\RoundRobin.py** - RoundRobin scheduler
 
+ **myos\ShortestJobFirst.py** - ShortestJobFirst scheduler
 
-
-
-
-![Image00](https://github.com/kj-grogu/OS_Simulator_Scheduling_Algorithms/blob/main/io/image00.png)
-
-![Image01](https://github.com/kj-grogu/OS_Simulator_Scheduling_Algorithms/blob/main/io/image01.png)
+ **myos\ShortestRemainingTimeFirst.py** - ShortestRemainingTimeFirst scheduler
 
 
 
