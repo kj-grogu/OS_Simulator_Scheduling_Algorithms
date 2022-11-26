@@ -32,9 +32,12 @@ class FirstComeFirstServe(threading.Thread):
 
         self.statusDict = {}
         self.statusDict["None"] = "background-color:none;"
-        self.statusDict["Ready"] = "background-color:yellow;"
-        self.statusDict["CPU"] = "background-color:green;"
-        self.statusDict["IO"] = "background-color:red;"
+        self.statusDict["Ready"] = "background-color: rgb(255, 247, 99);"
+        self.statusDict["CPU"] = "background-color: rgb(152, 235, 52);"
+        self.statusDict["IO"] = "background-color: rgb(230, 74, 50);"
+        self.throughputStart = -1;
+        self.throughputEnd = -1;
+        self.throughput = 0;
 
     def calculateTimeline(self):
         calculated = {}
@@ -87,6 +90,13 @@ class FirstComeFirstServe(threading.Thread):
         # print(f"final Time Line")
         print(finalTimeLine)
         self.finalTimeline = finalTimeLine
+        for t in range(31):
+            for k in list(finalTimeLine.keys()):
+                if self.throughputStart == -1 and self.finalTimeline[k][t] != "None":
+                    self.throughputStart = t
+                if self.finalTimeline[k][t] == "None":
+                    continue
+                self.throughputEnd = t
 
     def run(self):
         self.calculateTimeline()
@@ -184,10 +194,24 @@ class FirstComeFirstServe(threading.Thread):
             self.callback(id)
 
     def calculateAvgMetrics(self):
+        avgTt = 0.0
+        avgRt = 0.0
+        avgWt = 0.0
+
+        for k in self.ui.programState.TurnAroundTime:
+            avgTt += self.ui.programState.TurnAroundTime[k]
+            avgRt += self.ui.programState.ResponseTime[k]
+            avgWt += self.ui.programState.WaitTime[k]
+
+        avgTt = avgTt / 4.0
+        avgRt = avgRt / 4.0
+        avgWt = avgWt / 4.0
+        self.throughput = (self.throughputEnd - self.throughputStart) / 4.0
         self.ui.programState.Comparision["FirstComeFirstServe"] = {}
-        self.ui.programState.Comparision["FirstComeFirstServe"]["AvgTurnAroundTime"] = 5
-        self.ui.programState.Comparision["FirstComeFirstServe"]["AvgResponseTime"] = 3
-        self.ui.programState.Comparision["FirstComeFirstServe"]["AvgWaitTime"] = 1
+        self.ui.programState.Comparision["FirstComeFirstServe"]["AvgTurnAroundTime"] = avgTt
+        self.ui.programState.Comparision["FirstComeFirstServe"]["AvgResponseTime"] = avgRt
+        self.ui.programState.Comparision["FirstComeFirstServe"]["AvgWaitTime"] = avgWt
+        self.ui.programState.Comparision["FirstComeFirstServe"]["Throughput"] = self.throughput
 
     def kill(self):
         self.shutdown = True

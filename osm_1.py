@@ -10,17 +10,13 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-<<<<<<< HEAD
-# QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
-# # QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
-
-=======
->>>>>>> 294e44a8436a41a35f1984f1b0b6c28c41899e04
 from myos.FirstComeFirstServe import FirstComeFirstServe
 from myos.Priority import Priority
 from myos.MyProcess import MyProcess
 from myos.ProgramState import ProgramState
 from myos.RoundRobin import RoundRobin
+from myos.ShortestJobFirst import ShortestJobFirst
+from myos.ShortestRemainingTimeFirst import ShortestRemainingTimeFirst
 import matplotlib
 import threading, sys, os
 
@@ -44,6 +40,7 @@ class Ui_MainWindow(object):
         self.change_avgtat_plot()
         self.change_avgrt_plot()
         self.change_avgwt_plot()
+        self.change_avgtp_plot()
 
     def repainting(self):
         self.change_turnaroundtime_plot()
@@ -63,6 +60,7 @@ class Ui_MainWindow(object):
         self.resetP2Summary()
         self.resetP3Summary()
         self.resetP4Summary()
+        self.programState.resetSummaries()
 
     def updateP1Summary(self):
         print(f"update summary")
@@ -114,18 +112,6 @@ class Ui_MainWindow(object):
         print(f"Executing RoundRobin")
         self.programState.scheduler = RoundRobin(1,"RoundRobin", self, self.onProcessComplete)
         self.programState.scheduler.start()
-        # self.programState.scheduler.join()
-        # self.programState.Processes["P1"] = MyProcess(1, "P1", self, self.onProcessComplete)
-        # self.programState.Processes["P2"] = MyProcess(2, "P2", self, self.onProcessComplete)
-        # self.programState.Processes["P3"] = MyProcess(3, "P3", self, self.onProcessComplete)
-        # self.programState.Processes["P4"] = MyProcess(4, "P4", self, self.onProcessComplete)
-        #
-        #
-        # self.programState.Processes["P1"].start()
-        # self.programState.Processes["P2"].start()
-        # self.programState.Processes["P3"].start()
-        # self.programState.Processes["P4"].start()
-
         print(f"Started the proceses")
         return
 
@@ -142,13 +128,19 @@ class Ui_MainWindow(object):
 
     def ShortestJobFirst(self):
         print(f"Executing ShortestJobFirst")
+        self.programState.scheduler = ShortestJobFirst(1, "Priority", self, self.onProcessComplete)
+        self.programState.scheduler.start()
         return
 
     def ShortestRemainingTimeFirst(self):
         print(f"Executing ShortestRemainingTimeFirst")
+        self.programState.scheduler = ShortestRemainingTimeFirst(1, "Priority", self, self.onProcessComplete)
+        self.programState.scheduler.start()
         return
 
     def StartRun(self, algo):
+        if self.programState.scheduler != None:
+            self.programState.scheduler.kill()
         self.resetTimeLine()
         self.reset_RunGraphs()
         self.resetSummaries()
@@ -171,10 +163,6 @@ class Ui_MainWindow(object):
     def CancelCurrentRun(self, algo):
         print(f"Cancelling current run {algo}")
         self.programState.scheduler.kill()
-        # self.programState.Processes["P1"].kill()
-        # self.programState.Processes["P2"].kill()
-        # self.programState.Processes["P3"].kill()
-        # self.programState.Processes["P4"].kill()
         self.resetTimeLine()
         return
 
@@ -182,7 +170,7 @@ class Ui_MainWindow(object):
         print("Start is clicked")
         algo = self.comboBox.currentText()
         self.readData()
-        self.label_5.setText(f"Selected : {algo}")
+        self.label_5.setText(f"Selected : {algo}, Running...")
         self.reset_RunGraphs()
         self.StartRun(algo)
 
@@ -265,7 +253,11 @@ class Ui_MainWindow(object):
         processes = list(data.keys())
         values = list(data.values())
 
-        self.tatax.bar(processes,values)
+        self.tatax.bar(processes,values, color="green")
+
+        for i in range(len(processes)):
+            self.tatax.text(i, values[i], values[i], ha='center')
+
         self.tatax.set_xlabel('Processes')
         self.tatax.set_ylabel('Time Units')
         self.turnaroundtime_figure.tight_layout()
@@ -290,7 +282,11 @@ class Ui_MainWindow(object):
         data = self.programState.WaitTime
         processes = list(data.keys())
         values = list(data.values())
-        self.wtax.bar(processes, values)
+        self.wtax.bar(processes, values, color="blue")
+
+        for i in range(len(processes)):
+            self.wtax.text(i, values[i], values[i], ha='center')
+
         self.wtax.set_xlabel('Processes')
         self.wtax.set_ylabel('Time Units')
         self.waittime_figure.tight_layout()
@@ -312,11 +308,15 @@ class Ui_MainWindow(object):
 
     def change_responsetime_plot(self):
         self.rtax.clear()
-        data = self.programState.WaitTime
+        data = self.programState.ResponseTime
         processes = list(data.keys())
         values = list(data.values())
 
-        self.rtax.bar(processes, values)
+        self.rtax.bar(processes, values, color="orange")
+
+        for i in range(len(processes)):
+            self.rtax.text(i, values[i], values[i], ha='center')
+
         self.rtax.set_xlabel('Processes')
         self.rtax.set_ylabel('Time Units')
         self.responsetime_figure.tight_layout()
@@ -346,7 +346,11 @@ class Ui_MainWindow(object):
             values.append(data)
         values = list(values)
 
-        self.avgtatax.bar(processes, values)
+        self.avgtatax.bar(processes, values, color='purple')
+
+        for i in range(len(processes)):
+            self.avgtatax.text(i, values[i], values[i], ha='center')
+
         self.avgtatax.set_xlabel('Processes')
         self.avgtatax.set_ylabel('Time Units')
         self.avgtat_figure.tight_layout()
@@ -376,7 +380,11 @@ class Ui_MainWindow(object):
             values.append(data)
         values = list(values)
 
-        self.avgwtax.bar(processes, values)
+        self.avgwtax.bar(processes, values, color='brown')
+
+        for i in range(len(processes)):
+            self.avgwtax.text(i, values[i], values[i], ha='center')
+
         self.avgwtax.set_xlabel('Processes')
         self.avgwtax.set_ylabel('Time Units')
         self.avgwt_figure.tight_layout()
@@ -406,7 +414,11 @@ class Ui_MainWindow(object):
             values.append(data)
         values = list(values)
 
-        self.avgrtax.bar(processes, values)
+        self.avgrtax.bar(processes, values, color='olive')
+
+        for i in range(len(processes)):
+            self.avgrtax.text(i, values[i], values[i], ha='center')
+
         self.avgrtax.set_xlabel('Processes')
         self.avgrtax.set_ylabel('Time Units')
         self.avgrt_figure.tight_layout()
@@ -428,9 +440,23 @@ class Ui_MainWindow(object):
 
     def change_avgtp_plot(self):
         self.avgtpax.clear()
-        self.avgtpax.set_xlabel('')
-        self.avgtpax.set_ylabel('')
-        self.avgtpax.plot([0, 1, 2, 3, 4, 5], [1, 5, 6, 9, 15, 22])
+
+        processes = list(self.programState.Comparision.keys())
+        values = []
+        for k in self.programState.Comparision.keys():
+            data = self.programState.Comparision[k]["Throughput"]
+            values.append(data)
+        values = list(values)
+
+        print(f"Throughput values : {self.programState.Comparision}")
+
+        self.avgtpax.bar(processes, values, color='cyan')
+
+        for i in range(len(processes)):
+            self.avgtpax.text(i, values[i], values[i], ha='center')
+
+        self.avgtpax.set_xlabel('Algos')
+        self.avgtpax.set_ylabel('Time Units')
         self.avgtp_figure.tight_layout()
         self.avgtpcanvas.draw()
 
@@ -470,9 +496,9 @@ class Ui_MainWindow(object):
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setObjectName("pushButton")
         self.horizontalLayout.addWidget(self.pushButton)
-        self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_2.setObjectName("pushButton_2")
-        self.horizontalLayout.addWidget(self.pushButton_2)
+        # self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
+        # self.pushButton_2.setObjectName("pushButton_2")
+        # self.horizontalLayout.addWidget(self.pushButton_2)
         self.horizontalLayout.setStretch(0, 3)
         self.horizontalLayout.setStretch(2, 1)
         self.horizontalLayout.setStretch(3, 1)
@@ -1465,7 +1491,6 @@ class Ui_MainWindow(object):
         # self.label_12.setObjectName("label_12")
         # self.turnaroundtime_layout.addWidget(self.label_12)
         self.gridLayout.addWidget(self.widget, 0, 0, 1, 1)
-        self.verticalLayout.addLayout(self.gridLayout)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
         self.p1_textEdit = QtWidgets.QPlainTextEdit(self.centralwidget)
@@ -1485,14 +1510,16 @@ class Ui_MainWindow(object):
         self.p4_textEdit.setObjectName("p4_textEdit")
         self.horizontalLayout_4.addWidget(self.p4_textEdit)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
+        self.verticalLayout.addLayout(self.gridLayout)
+
         self.horizontalLayout_10.addLayout(self.verticalLayout)
         self.verticalLayout_10 = QtWidgets.QVBoxLayout()
         self.verticalLayout_10.setObjectName("verticalLayout_10")
         self.horizontalLayout_8 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_8.setObjectName("horizontalLayout_8")
-        self.pushButton_47 = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_47.setObjectName("pushButton_47")
-        self.horizontalLayout_8.addWidget(self.pushButton_47)
+        # self.pushButton_47 = QtWidgets.QPushButton(self.centralwidget)
+        # self.pushButton_47.setObjectName("pushButton_47")
+        # self.horizontalLayout_8.addWidget(self.pushButton_47)
         self.pushButton_46 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_46.setObjectName("pushButton_46")
         self.horizontalLayout_8.addWidget(self.pushButton_46)
@@ -1625,13 +1652,13 @@ class Ui_MainWindow(object):
         self.comboBox.setItemText(3, _translate("MainWindow", "RoundRobin"))
         self.comboBox.setItemText(4, _translate("MainWindow", "Priority"))
         self.pushButton.setText(_translate("MainWindow", "Start"))
-        self.pushButton_2.setText(_translate("MainWindow", "Stop"))
+        # self.pushButton_2.setText(_translate("MainWindow", "Stop"))
 
         self.pushButton.clicked.connect(self.press_StartButton)
-        self.pushButton_2.clicked.connect(self.press_StopButton)
+        # self.pushButton_2.clicked.connect(self.press_StopButton)
 
         self.pushButton_46.clicked.connect(self.press_ClearButton)
-        self.pushButton_47.clicked.connect(self.press_CompareButton)
+        # self.pushButton_47.clicked.connect(self.press_CompareButton)
 
 
 
@@ -1779,7 +1806,7 @@ class Ui_MainWindow(object):
         self.p1_timeline_13.setText(_translate("MainWindow", "13"))
         self.p1_timeline_14.setText(_translate("MainWindow", "14"))
         self.p1_timeline_15.setText(_translate("MainWindow", "15"))
-        self.p1_timeline_16.setText(_translate("MainWindow", "15"))
+        self.p1_timeline_16.setText(_translate("MainWindow", "16"))
         self.p1_timeline_17.setText(_translate("MainWindow", "17"))
         self.p1_timeline_18.setText(_translate("MainWindow", "18"))
         self.p1_timeline_19.setText(_translate("MainWindow", "19"))
@@ -1912,7 +1939,7 @@ class Ui_MainWindow(object):
 "Turn Around Time : \n"
 "Wait Time : \n"
 "Response Time : "))
-        self.pushButton_47.setText(_translate("MainWindow", "Compare"))
+        # self.pushButton_47.setText(_translate("MainWindow", "Compare"))
         self.pushButton_46.setText(_translate("MainWindow", "Clear"))
         self.radioButton_2.setText(_translate("MainWindow", "Light"))
         self.radioButton.setText(_translate("MainWindow", "Dark"))
@@ -1928,30 +1955,11 @@ class Ui_MainWindow(object):
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-<<<<<<< HEAD
-    app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
-    app.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
-
-
-    MainWindow = QtWidgets.QMainWindow()
-    MainWindow.setMaximumWidth(1500)
-    # MainWindow.setMaximumHeight(600)
-    # MainWindow.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
-    # MainWindow.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
-
-    MainWindow.setWindowTitle("Operating System Simulator")
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-
-
-
-=======
     # app.setStyleSheet(qdarktheme.load_stylesheet("light"))
     MainWindow = QtWidgets.QMainWindow()
     MainWindow.setWindowTitle("Operating System Simulator")
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
->>>>>>> 294e44a8436a41a35f1984f1b0b6c28c41899e04
     app.aboutToQuit.connect(ui.cleanup)
     MainWindow.show()
     sys.exit(app.exec_())

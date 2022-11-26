@@ -51,3 +51,22 @@ class ProgramState():
 
     Comparision = {}
 
+    scheduler = None
+
+    def resetSummaries(self):
+        self.TurnAroundTime["P1"] = 0
+        self.TurnAroundTime["P2"] = 0
+        self.TurnAroundTime["P3"] = 0
+        self.TurnAroundTime["P4"] = 0
+
+        self.WaitTime["P1"] = 0
+        self.WaitTime["P2"] = 0
+        self.WaitTime["P3"] = 0
+        self.WaitTime["P4"] = 0
+
+        self.ResponseTime["P1"] = 0
+        self.ResponseTime["P2"] = 0
+        self.ResponseTime["P3"] = 0
+        self.ResponseTime["P4"] = 0
+
+
