@@ -1,5 +1,6 @@
 class ProgramState():
     indexes = ["P1", "P2", "P3", "P4"]
+    roundRobinCPUBurst = 1
     Algo = ""
     ArrivalTime = 0
     Priority = 1

@@ -32,7 +32,7 @@ class ShortestRemainingTimeFirst(threading.Thread):
 
         self.statusDict = {}
         self.statusDict["None"] = "background-color:none;"
-        self.statusDict["READY"] = "background-color: rgb(255, 247, 99);"
+        self.statusDict["Ready"] = "background-color: rgb(255, 247, 99);"
         self.statusDict["CPU"] = "background-color: rgb(152, 235, 52);"
         self.statusDict["IO"] = "background-color:rgb(230, 74, 50);"
 
@@ -41,6 +41,159 @@ class ShortestRemainingTimeFirst(threading.Thread):
         self.throughput = 0;
 
     def calculateTimeline(self):
+        indexes = ["P1", "P2", "P3", "P4"]
+        calculated = {}
+        calculated["P1"] = []
+        calculated["P2"] = []
+        calculated["P3"] = []
+        calculated["P4"] = []
+        mode = {}
+        mode["P1"] = []
+        mode["P2"] = []
+        mode["P3"] = []
+        mode["P4"] = []
+        finalTimeLine = {}
+        finalTimeLine["P1"] = ["None"] * 31
+        finalTimeLine["P2"] = ["None"] * 31
+        finalTimeLine["P3"] = ["None"] * 31
+        finalTimeLine["P4"] = ["None"] * 31
+        arrivalTime = {}
+        arrivalTime["P1"] = 0
+        arrivalTime["P2"] = 0
+        arrivalTime["P3"] = 0
+        arrivalTime["P4"] = 0
+
+        priorities = {}  ## startTime, Priority
+        processStart = {}
+        processGiven = {}
+        processQueue = {}
+
+        requiredCPUTime = {}
+        requiredCPUTime["P1"] = []
+        requiredCPUTime["P2"] = []
+        requiredCPUTime["P3"] = []
+        requiredCPUTime["P4"] = []
+
+        processFinished = {}
+        processFinished["P1"] = False
+        processFinished["P2"] = False
+        processFinished["P3"] = False
+        processFinished["P4"] = False
+        arrived = {}
+        processStart = {}
+        processFirstCPU = {}
+
+        currentProcess = "-None-"
+        data = self.ui.programState.Data
+
+        for t in range(len(data)):
+            p = "P{0}".format(t + 1)
+            processStart[p] = data[p][0]
+            for pi in range(len(data[p])):
+                if pi == 1:
+                    continue
+                l = len(calculated[p])
+                prev = calculated[p][-1] if l > 0 else 0
+                calculated[p].append(prev + data[p][pi])
+        # print(calculated)
+
+        for i in range(len(data)):
+            p = "P{0}".format(i + 1)
+            for j in range(len(data[p])):
+                if j < 2 or j % 2 == 1:
+                    continue
+                if data[p][j] > 0:
+                    requiredCPUTime[p].append(data[p][j])
+
+        print(requiredCPUTime)
+
+        for t in range(len(data)):
+            p = "P{0}".format(t + 1)
+            arr = ["CPU", "IO"]
+            ai = 0
+            for pi in range(len(calculated[p]) - 1):
+                cur = calculated[p][pi]
+                next = calculated[p][pi + 1]
+                for k in range(cur, next, 1):
+                    mode[p].append(arr[ai])
+                ai += 1
+                ai = ai % 2
+        print("Mode=====")
+        print(mode)
+        print("Mode=====")
+
+        minHeap = PriorityQueue()
+
+        for t in range(31):
+            for pi in range(4): ## check if a process has arrived
+                p = "P{0}".format(pi + 1)
+                if p in arrived:
+                    continue
+                if t < processStart[p]:
+                    continue;
+                else:
+                    minHeap.put((requiredCPUTime[p][0], p))
+                    arrived[p] = True
+
+            cpuGiven = False
+
+            toProcess = minHeap.qsize()
+            if toProcess < 1:
+                continue
+
+            iterateQueue = []
+            while not minHeap.empty():
+                iterateQueue.append(minHeap.get())
+            minHeap = PriorityQueue()
+
+            print(f"T : {t}, currentInQueue : {iterateQueue}")
+
+            # for each process at this time unit that has arrived try to update status
+            for qi in range(toProcess):
+                print(f"Time : {t}, beforeProcessing : {iterateQueue}")
+                currentProcess = iterateQueue[qi][1]
+                currentMode = mode[currentProcess][0]
+                if currentProcess not in processStart:
+                    processStart[currentProcess] = t
+                if currentMode == "IO":
+                    finalTimeLine[currentProcess][t] = "IO"
+                    mode[currentProcess].pop(0)
+                if currentMode == "CPU":
+                    if cpuGiven == False:
+                        cpuGiven = True
+                        finalTimeLine[currentProcess][t] = "CPU"
+                        mode[currentProcess].pop(0)
+                        ccp = requiredCPUTime[currentProcess][0]
+                        if ccp > 1:
+                            requiredCPUTime[currentProcess][0] = ccp - 1
+                        else:
+                            requiredCPUTime[currentProcess].pop(0)
+                        if currentProcess not in processFirstCPU:
+                            processFirstCPU[currentProcess] = t
+                            self.ui.programState.ResponseTime[currentProcess] = t - processStart[currentProcess]
+                    else:
+                        finalTimeLine[currentProcess][t] = "Ready"
+                        self.ui.programState.WaitTime[currentProcess] += 1
+                if len(requiredCPUTime[currentProcess]) > 0:
+                    minHeap.put((requiredCPUTime[currentProcess][0], currentProcess))
+                else:
+                    self.ui.programState.TurnAroundTime[currentProcess] = t - processStart[currentProcess] + 1
+
+        print(finalTimeLine)
+        self.finalTimeline = finalTimeLine
+        print(f"============================")
+        print(self.finalTimeline)
+        print(f"============================")
+
+        for t in range(31):
+            for k in list(finalTimeLine.keys()):
+                if self.throughputStart == -1 and self.finalTimeline[k][t] != "None":
+                    self.throughputStart = t
+                if self.finalTimeline[k][t] == "None":
+                    continue
+                self.throughputEnd = t
+
+    def calculateTimelineOLD(self):
         indexes = ["P1", "P2", "P3", "P4"]
         calculated = {}
         calculated["P1"] = []
@@ -117,33 +270,27 @@ class ShortestRemainingTimeFirst(threading.Thread):
                     if p not in processStart:
                         processStart[p] = t
                         minHeap.put((requiredCPUTime[p], p))
-                    if p in processGiven and requiredCPUTime[p] == 0 and not processFinished[p]:
+                    if p in processGiven and processGiven[p] >= requiredCPUTime[p] and not processFinished[p]:
                         print(f"Process finished {p}")
                         processFinished[p] = True
-                        self.ui.programState.TurnAroundTime[p] = t - processStart[p]  # calculate the TurnAroundTime when finishing
+                        self.ui.programState.TurnAroundTime[p] = t - processStart[p] # calculate the TurnAroundTime when finishing
                         currentProcess = "-None-"  ## if minHeap.empty() else minHeap.get()[1] # take up the next process
-            while not minHeap.empty():
-                nextTuple = minHeap.get()
-                nextProcess = nextTuple[1]
-                # push back into heap after decrementing
-                if (nextTuple[0] == 0):
-                    continue
-                minHeap.put((nextTuple[0] - 1, nextProcess))
-                if processFinished[nextProcess] == True:
-                    continue
-                else:
-                    currentProcess = nextProcess
-                    break
+            if currentProcess == "-None-":
+                while not minHeap.empty():
+                    nextProcess = minHeap.get()[1]
+                    if processFinished[nextProcess] == True:
+                        continue
+                    else:
+                        currentProcess = nextProcess
+                        self.ui.programState.ResponseTime[currentProcess] = t - processStart[currentProcess] # when changing process update the responseTime
+                        break
             if currentProcess == "-None-":
                 continue
             if currentProcess not in processGiven:
                 processGiven[currentProcess] = 0
-                print(f" {currentProcess} : {processStart[currentProcess]}")
-                self.ui.programState.ResponseTime[currentProcess] = t - processStart[currentProcess]
-                print(f" SRTF : {self.ui.programState.ResponseTime}")
             processGiven[currentProcess] += 1
-            requiredCPUTime[currentProcess] -= 1
-            finalTimeLine[currentProcess][t] = processQueue[currentProcess].pop(0)
+            operation = processQueue[currentProcess].pop(0)
+            finalTimeLine[currentProcess][t] = operation
 
             # mark other processes as ready if they have arrived
             for op in indexes:
@@ -152,13 +299,13 @@ class ShortestRemainingTimeFirst(threading.Thread):
                 if op not in processStart or currentProcess == op:
                     continue
                 finalTimeLine[op][t] = "READY"
-                self.ui.programState.WaitTime[op] += 1  # increase the wait time for each ready state
+                self.ui.programState.WaitTime[op] += 1 # increase the wait time for each ready state
 
         self.finalTimeline = finalTimeLine
         print(f"============================")
         print(self.finalTimeline)
-        print(self.ui.programState.WaitTime)
         print(f"============================")
+
 
         for t in range(31):
             for k in list(finalTimeLine.keys()):

@@ -41,11 +41,6 @@ class Priority(threading.Thread):
         self.throughput = 0;
 
     def calculateTimeline(self):
-        # data = {}
-        # data["P1"] = [0, 0, 3, 1, 1, 1, 1, 0]
-        # data["P2"] = [2, 1, 1, 1, 4, 0, 0, 0]
-        # data["P3"] = [3, 2, 2, 1, 2, 0, 0, 0]
-        # data["P4"] = [1, 3, 1, 1, 1, 1, 1, 0]
         calculated = {}
         calculated["P1"] = []
         calculated["P2"] = []
@@ -65,66 +60,171 @@ class Priority(threading.Thread):
         processStart = {}
         processGiven = {}
         processQueue = {}
-        processFinished = {}
+
+        requiredCPUTime = {}
+        requiredCPUTime["P1"] = []
+        requiredCPUTime["P2"] = []
+        requiredCPUTime["P3"] = []
+        requiredCPUTime["P4"] = []
+
+        arrivedProcess = {}
+        processStart = {}
         processFirstCPU = {}
+        processFinished = {}
 
         data = self.ui.programState.Data
+
+        # for i in range(len(data)):
+        #     p = "P{0}".format(i + 1)
+        #     for j in range(len(data[p])):
+        #         if j == 1:
+        #             priorities[p] = [data[p][0], data[p][1]]
+        #             continue
+        #         l = len(calculated[p])
+        #         prev = calculated[p][-1] if l > 0 else 0
+        #         calculated[p].append(prev + data[p][j])
+        #         if j > 1:
+        #             if p not in processQueue:
+        #                 processQueue[p] = []
+        #             for k in range(data[p][j]):
+        #                 if j % 2 == 0:
+        #                     processQueue[p].append("CPU")
+        #                 else:
+        #                     processQueue[p].append("IO")
+        #
+        # maxHeap = PriorityQueue()
+        # for t in range(31):
+        #     for j in range(4):
+        #         p = "P{0}".format(j + 1)
+        #         print(f"p : {p}, processStart : {processStart}")
+        #         if priorities[p][0] <= t:
+        #             maxHeap.put((priorities[p][1] * -1, p))
+        #             if p not in processStart:
+        #                 processStart[p] = t
+        #             required = calculated[p][6] - calculated[p][0]
+        #             if p in processGiven and processGiven[p] >= required:
+        #                 if p not in processFinished:
+        #                     self.ui.programState.TurnAroundTime[p] = t - processStart[p]
+        #                     processFinished[p] = t
+        #                 print(f"Process finished {p}, {maxHeap.get()} at time : {t}, processStart : {processStart}")
+        #     tempQue = copy.copy(maxHeap)
+        #     if tempQue.empty():
+        #         continue
+        #     currentHighest = tempQue.get()[1]
+        #
+        #     if currentHighest not in processGiven:
+        #         processGiven[currentHighest] = 0
+        #         processFirstCPU[currentHighest] = t
+        #     processGiven[currentHighest] += 1
+        #     finalTimeLine[currentHighest][t] = processQueue[currentHighest].pop(0)
+        #
+        #     while not tempQue.empty():
+        #         op = tempQue.get()[1]
+        #         finalTimeLine[op][t] = "READY"
+        #         self.ui.programState.WaitTime[op] += 1
+        # print(finalTimeLine)
+
+        ## RESPONSE TIME
+
+        for t in range(len(data)):
+            p = "P{0}".format(t + 1)
+            processStart[p] = data[p][0]
+            for pi in range(len(data[p])):
+                if pi == 1:
+                    continue
+                l = len(calculated[p])
+                prev = calculated[p][-1] if l > 0 else 0
+                calculated[p].append(prev + data[p][pi])
 
         for i in range(len(data)):
             p = "P{0}".format(i + 1)
             for j in range(len(data[p])):
                 if j == 1:
-                    priorities[p] = [data[p][0], data[p][1]]
+                    priorities[p] = data[p][1]
                     continue
-                l = len(calculated[p])
-                prev = calculated[p][-1] if l > 0 else 0
-                calculated[p].append(prev + data[p][j])
-                if j > 1:
-                    if p not in processQueue:
-                        processQueue[p] = []
-                    for k in range(data[p][j]):
-                        if j % 2 == 0:
-                            processQueue[p].append("CPU")
-                        else:
-                            processQueue[p].append("IO")
+                if j < 2 or j % 2 == 1:
+                    continue
+                if data[p][j] > 0:
+                    requiredCPUTime[p].append(data[p][j])
 
-        maxHeap = PriorityQueue()
+        print(requiredCPUTime)
+        print(f"priorities{priorities}")
+
+        for t in range(len(data)):
+            p = "P{0}".format(t + 1)
+            arr = ["CPU", "IO"]
+            ai = 0
+            for pi in range(len(calculated[p]) - 1):
+                cur = calculated[p][pi]
+                next = calculated[p][pi + 1]
+                for k in range(cur, next, 1):
+                    mode[p].append(arr[ai])
+                ai += 1
+                ai = ai % 2
+        print("Mode=====")
+        print(mode)
+        print("Mode=====")
+
+        highPriorityProcess = "X"
+        oringinalPriority = -1
+
         for t in range(31):
-            for j in range(4):
-                p = "P{0}".format(j + 1)
-                print(f"p : {p}, processStart : {processStart}")
-                if priorities[p][0] <= t:
-                    maxHeap.put((priorities[p][1] * -1, p))
-                    if p not in processStart:
-                        processStart[p] = t
-                    required = calculated[p][6] - calculated[p][0]
-                    if p in processGiven and processGiven[p] >= required:
-                        if p not in processFinished:
-                            self.ui.programState.TurnAroundTime[p] = t - processStart[p]
-                            processFinished[p] = t
-                        print(f"Process finished {p}, {maxHeap.get()} at time : {t}, processStart : {processStart}")
-            tempQue = copy.copy(maxHeap)
-            if tempQue.empty():
-                continue
-            currentHighest = tempQue.get()[1]
+            for pi in range(4):  ## check if a process has arrived
+                p = "P{0}".format(pi + 1)
+                if p in arrivedProcess:
+                    continue
+                if t < processStart[p]:
+                    continue;
+                else:
+                    print(f"T: {t} New Process Arrived : {p}")
+                    arrivedProcess[p] = t
+                    curHighestForCPU = p
 
-            if currentHighest not in processGiven:
-                processGiven[currentHighest] = 0
-                processFirstCPU[currentHighest] = t
-            processGiven[currentHighest] += 1
-            finalTimeLine[currentHighest][t] = processQueue[currentHighest].pop(0)
+            currentlyInIO = {}
+            print(f"T:{t}, arrived Process : {arrivedProcess}")
+            print(f"T:{t}, priorities Process : {priorities}")
 
-            while not tempQue.empty():
-                op = tempQue.get()[1]
-                finalTimeLine[op][t] = "READY"
-                self.ui.programState.WaitTime[op] += 1
+            curHighestPriority = -1
+            for ap in arrivedProcess:
+                if ap in processFinished.keys() or mode[ap][0] == 'IO':
+                    continue
+                cp = priorities[ap]
+                if cp > curHighestPriority:
+                    curHighestPriority = cp
+                    curHighestForCPU = ap
+
+            print(f"processFinished : {processFinished}")
+            print(f"T:{t}, curHighestForCPU : {curHighestForCPU}, requiredCPUTime of curHighestForCPU : {requiredCPUTime[curHighestForCPU]}")
+            for ap in arrivedProcess:
+                if ap in processFinished.keys():
+                    continue
+                if mode[ap][0] == 'IO':
+                    finalTimeLine[ap][t] = "IO"
+                    mode[ap].pop(0)
+                    currentlyInIO[ap] = True
+                    continue
+                if ap == curHighestForCPU:
+                    finalTimeLine[ap][t] = "CPU"
+                    mode[ap].pop(0)
+                    if requiredCPUTime[ap][0] > 1:
+                        requiredCPUTime[ap][0] -= 1
+                    else:
+                        requiredCPUTime[ap].pop(0)
+                        if len(requiredCPUTime[ap]) == 0:
+                            processFinished[ap] = True
+                            self.ui.programState.TurnAroundTime[ap] = t - processStart[ap] + 1
+                        oringinalPriority = -1
+                    if ap not in processFirstCPU.keys():
+                        processFirstCPU[ap] = t
+                        self.ui.programState.ResponseTime[ap] = t - processStart[ap]
+                else:
+                    finalTimeLine[ap][t] = "READY"
+                    self.ui.programState.WaitTime[ap] += 1
+
         print(finalTimeLine)
 
-        ## RESPONSE TIME
-        for k in list(processFirstCPU.keys()):
-            self.ui.programState.ResponseTime[k] = processFirstCPU[k] - processStart[k]
-
         self.finalTimeline = finalTimeLine
+
         for t in range(31):
             for k in list(finalTimeLine.keys()):
                 if self.throughputStart == -1 and self.finalTimeline[k][t] != "None":
@@ -135,7 +235,6 @@ class Priority(threading.Thread):
 
     def run(self):
         self.calculateTimeline()
-        self.queue = []
         self.clockTime = -1
         try:
             for i in range(31):

@@ -50,46 +50,97 @@ class FirstComeFirstServe(threading.Thread):
         mode["P2"] = []
         mode["P3"] = []
         mode["P4"] = []
+        processStart = {}
+        processFirstCPU = {}
+
         finalTimeLine = {}
         finalTimeLine["P1"] = ["None"] * 31
         finalTimeLine["P2"] = ["None"] * 31
         finalTimeLine["P3"] = ["None"] * 31
         finalTimeLine["P4"] = ["None"] * 31
 
+        arrived = {}
+
         data = self.ui.programState.Data
 
-        for i in range(len(data)):
-            p = "P{0}".format(i + 1)
-            for j in range(len(data[p])):
-                if j == 1:
+        for t in range(len(data)):
+            p = "P{0}".format(t + 1)
+            processStart[p] = data[p][0]
+            for pi in range(len(data[p])):
+                if pi == 1:
                     continue
                 l = len(calculated[p])
                 prev = calculated[p][-1] if l > 0 else 0
-                calculated[p].append(prev + data[p][j])
+                calculated[p].append(prev + data[p][pi])
         # print(calculated)
-        for i in range(len(data)):
-            p = "P{0}".format(i + 1)
+        for t in range(len(data)):
+            p = "P{0}".format(t + 1)
             arr = ["CPU", "IO"]
             ai = 0
-            for j in range(len(calculated[p]) - 1):
-                cur = calculated[p][j]
-                next = calculated[p][j + 1]
+            for pi in range(len(calculated[p]) - 1):
+                cur = calculated[p][pi]
+                next = calculated[p][pi + 1]
                 for k in range(cur, next, 1):
                     mode[p].append(arr[ai])
                 ai += 1
                 ai = ai % 2
-        # print(mode)
-        for i in range(len(data)):
-            p = "P{0}".format(i + 1)
-            start = calculated[p][0]
-            end = calculated[p][-1]
-            mi = 0
-            for j in range(start, end, 1):
-                finalTimeLine[p][j] = mode[p][mi]
-                mi += 1
-        # print(f"final Time Line")
+        print("Mode=====")
+        print(mode)
+        print("Mode=====")
+
+        queue = []
+        for t in range(31):
+            for pi in range(4):
+                p = "P{0}".format(pi + 1)
+                if p in arrived:
+                    continue
+                if t < processStart[p]:
+                    continue;
+                else:
+                    queue.append(p)
+                    arrived[p] = True
+            if len(queue) < 1:
+                continue
+
+            cpuGiven = False
+            beforeProcessing = queue.copy()
+            toProcess = len(queue)
+            if toProcess < 1:
+                continue
+            for qi in range(toProcess):
+                print(f"Time : {t}, beforeProcessing : {beforeProcessing}")
+                currentProcess = beforeProcessing[qi]
+                currentMode = mode[currentProcess][0]
+                print(f"Time : {t}, current Process : {currentProcess}, processStart : {processStart}")
+                if currentProcess not in processStart:
+                    processStart[currentProcess] = t
+                    print(f"Time : {t},Adding current Process {processStart}")
+                if currentMode == "IO":
+                    finalTimeLine[currentProcess][t] = "IO"
+                    mode[currentProcess].pop(0)
+                    del queue[qi]
+                    # queue.pop(0)
+                    queue.append(currentProcess)
+                if currentMode == "CPU":
+                    if cpuGiven == False:
+                        cpuGiven = True
+                        finalTimeLine[currentProcess][t] = "CPU"
+                        mode[currentProcess].pop(0)
+                        if currentProcess not in processFirstCPU:
+                            processFirstCPU[currentProcess] = t
+                            self.ui.programState.ResponseTime[currentProcess] = t - processStart[currentProcess]
+                    else:
+                        finalTimeLine[currentProcess][t] = "Ready"
+                        self.ui.programState.WaitTime[currentProcess] += 1
+                if len(mode[currentProcess]) < 1:
+                    queue.remove(currentProcess)
+                    print("self.processStart")
+                    print(processStart)
+                    self.ui.programState.TurnAroundTime[currentProcess] = t - processStart[currentProcess] + 1
+
         print(finalTimeLine)
         self.finalTimeline = finalTimeLine
+
         for t in range(31):
             for k in list(finalTimeLine.keys()):
                 if self.throughputStart == -1 and self.finalTimeline[k][t] != "None":
@@ -103,7 +154,44 @@ class FirstComeFirstServe(threading.Thread):
         self.queue = []
         self.clockTime = -1
         try:
-            while(self.clockTime < self.maxTime and self.processedCount < 4):
+            for i in range(31):
+                sleep(2)
+                self.clockTime += 1
+                print(f"FCFS Running clockTime : {self.clockTime}")
+                if self.processedCount >= 4 or self.shutdown == True:
+                    break
+                for j in range(len(ProgramState.indexes)):
+                    p = ProgramState.indexes[j]
+                    ### SET COLOR
+                    bid = "{0}_timeline_{1}".format(p.lower(), self.clockTime)
+                    button = self.ui.__dict__[bid]
+                    status = self.finalTimeline[p][i]
+                    style = self.statusDict[status]
+                    # print(f"Process : {p} at {self.clockTime} has  Status : {status} and Style :{style}")
+                    button.setStyleSheet(style)
+                    sleep(0.05)
+                    ### SET COLOR
+                ## FOR ENDS
+            ## FOR ENDS
+        ## TRY ENDS
+        except Exception as e:
+            print("Some Exception in FCFS")
+            traceback.print_exc()
+            print(e)
+        finally:
+            print("Finally of FCFS...")
+            self.calculateAvgMetrics()
+            self.ui.repainting()
+            self.kill()
+            self.callback(id)
+            self.ui.label_5.setText(f" FCFS Done...")
+
+    def runOLD(self):
+        self.calculateTimeline()
+        self.queue = []
+        self.clockTime = -1
+        try:
+            for i in range(31):
                 sleep(2)
                 self.clockTime += 1
                 print(f"FCFS Running clockTime : {self.clockTime}")
@@ -146,8 +234,8 @@ class FirstComeFirstServe(threading.Thread):
                     sleep(0.05)
                     ### INNER LOOP ENDS
 
-                ## READY LOOP STARTS
-                for i in range(1, len(self.queue), 1):
+                ## READY LOOP STARTS start from 2 as first process in io and second in CPU
+                for i in range(2, len(self.queue), 1):
                     p = self.queue[i]
                     bid = "{0}_timeline_{1}".format(p.lower(), self.clockTime)
                     button = self.ui.__dict__[bid]

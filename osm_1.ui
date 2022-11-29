@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="2,1">
+     <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="1,5">
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
@@ -3150,6 +3150,12 @@ Response Time : </string>
          <layout class="QVBoxLayout" name="verticalLayout_5">
           <item>
            <widget class="QWidget" name="widget_4" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <layout class="QVBoxLayout" name="compare_turnaroundtime_layout">
              <item>
               <widget class="QLabel" name="label_19">
@@ -3170,6 +3176,12 @@ Response Time : </string>
           </item>
           <item>
            <widget class="QWidget" name="widget_5" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <layout class="QVBoxLayout" name="compare_waittime_layout">
              <item>
               <widget class="QLabel" name="label_20">
@@ -3190,6 +3202,12 @@ Response Time : </string>
           </item>
           <item>
            <widget class="QWidget" name="widget_6" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <layout class="QVBoxLayout" name="compare_responsetime_layout">
              <item>
               <widget class="QLabel" name="label_21">
@@ -3210,6 +3228,12 @@ Response Time : </string>
           </item>
           <item>
            <widget class="QWidget" name="widget_7" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <layout class="QVBoxLayout" name="compare_throughput_layout">
              <item>
               <widget class="QLabel" name="label_22">
