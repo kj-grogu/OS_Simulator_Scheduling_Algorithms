@@ -272,6 +272,7 @@ class RoundRobin(threading.Thread):
                     processedAlready[ap] = True
                     mode[ap].pop(0)
                     processedAtTime[ap] = True
+                    timeSliceMap[ap] = timeSlice
                     ## if at next time the process is ready for CPU push it to CPU
                     if mode[ap][0] == 'CPU':
                         queue.append(ap)
